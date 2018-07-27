@@ -7,6 +7,9 @@
 - Download libimagepicker.h from this repository and place it in your **$THEOS/include** folder.
 
 ### Adding libimagepicker into your tweak's prefs bundle:
+
+##### Images must be stored in a different plist to any other settings in your tweak!
+
 Add a new dictionary in your preference's specifier plist like this:
 ```
 		<dict>
