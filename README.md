@@ -56,7 +56,7 @@ Add a new dictionary in your preference's specifier plist like this:
 		</dict>
 ```
 
-###Accessing images from your Tweak.xm:
+### Accessing images from your Tweak.xm:
 
 Images are stored in your defaults plist as NSData. You can access this data in exactly the same way you would with any other value stored in a plist. Once you've got the image as data, you can convert it to a UIImage either by using `[UIImage imageWithData:data]` or by using `LIPParseImage(data)`.
 
