@@ -13,6 +13,8 @@
 		self.key = [[arg3 properties] valueForKey:@"key"];
 		self.defaults = [[arg3 properties] valueForKey:@"defaults"];
 		self.postNotification = [[arg3 properties] valueForKey:@"PostNotification"];
+		self.usesJPEG = [[arg3 properties] valueForKey:@"usesJPEG"] ? [[[arg3 properties] valueForKey:@"usesJPEG"] boolValue] : NO;
+		self.compressionRate = [[arg3 properties] valueForKey:@"compressionRate"] ? [[[arg3 properties] valueForKey:@"compressionRate"] floatValue] : 1.0;
 	}
 	return self;
 }
@@ -24,12 +26,15 @@
     {
         NSDictionary* preferences = [[NSDictionary alloc] initWithContentsOfFile:[NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", self.defaults]];
         UIImage* img = [UIImage imageWithData:preferences[self.key]];
-        CGFloat imgSize = self.frame.size.height - 10;
-        previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
-        [previewImage setContentMode:UIViewContentModeScaleAspectFill];
-        [previewImage setClipsToBounds:YES];
-        previewImage.image = img;
-        [self addSubview:previewImage];
+		if (img)
+		{
+			CGFloat imgSize = self.frame.size.height - 10;
+	        previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
+	        [previewImage setContentMode:UIViewContentModeScaleAspectFill];
+	        [previewImage setClipsToBounds:YES];
+	        previewImage.image = img;
+	        [self addSubview:previewImage];
+		}
     }
 }
 
@@ -51,7 +56,7 @@
 	[picker.view addSubview:spinner];
 	[spinner startAnimating];
 
-	NSData* data = UIImagePNGRepresentation(image);
+	NSData* data = self.usesJPEG ? UIImageJPEGRepresentation(image, self.compressionRate) : UIImagePNGRepresentation(image);
 	NSString* prefsPath = [NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", self.defaults];
 	NSMutableDictionary* preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:prefsPath];
 	if (!preferences)
