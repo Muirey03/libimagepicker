@@ -14,7 +14,7 @@
 		self.defaults = [[arg3 properties] valueForKey:@"defaults"];
 		self.postNotification = [[arg3 properties] valueForKey:@"PostNotification"];
 		self.usesJPEG = [[arg3 properties] valueForKey:@"usesJPEG"] ? [[[arg3 properties] valueForKey:@"usesJPEG"] boolValue] : NO;
-		self.compressionRate = [[arg3 properties] valueForKey:@"compressionRate"] ? [[[arg3 properties] valueForKey:@"compressionRate"] floatValue] : 1.0;
+		self.compressionQuality = [[arg3 properties] valueForKey:@"compressionQuality"] ? [[[arg3 properties] valueForKey:@"compressionQuality"] floatValue] : 1.0;
 	}
 	return self;
 }
@@ -56,7 +56,7 @@
 	[picker.view addSubview:spinner];
 	[spinner startAnimating];
 
-	NSData* data = self.usesJPEG ? UIImageJPEGRepresentation(image, self.compressionRate) : UIImagePNGRepresentation(image);
+	NSData* data = self.usesJPEG ? UIImageJPEGRepresentation(image, self.compressionQuality) : UIImagePNGRepresentation(image);
 	NSString* prefsPath = [NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", self.defaults];
 	NSMutableDictionary* preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:prefsPath];
 	if (!preferences)

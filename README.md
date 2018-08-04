@@ -27,6 +27,10 @@ Add a new dictionary in your preference's specifier plist like this:
 			<string>SAVE KEY</string>
 			<key>PostNotification</key>
 			<string>NOTIFICATION TO POST (OPTIONAL)</string>
+			<key>usesJPEG</key>
+			<true/> <!-- Whether to use JPEG compression, defaults to false -->
+			<key>compressionQuality</key>
+			<real>DESIRED COMPRESSION QUALITY</real> <!-- The quality of the resulting JPEG image, expressed as a value from 0.0 to 1.0. The value 0.0 represents the maximum compression (or lowest quality) while the value 1.0 represents the least compression (or best quality). -->
 		</dict>
 ```
 
@@ -45,5 +49,20 @@ Add a new dictionary in your preference's specifier plist like this:
 			<string>com.muirey03.liptestimages</string>
 			<key>key</key>
 			<string>backgroundImage</string>
+			<key>usesJPEG</key>
+			<true/>
+			<key>compressionQuality</key>
+			<real>0.8</real>
 		</dict>
+```
+
+###Accessing images from your Tweak.xm:
+
+Images are stored in your defaults plist as NSData. You can access this data in exactly the same way you would with any other value stored in a plist. Once you've got the image as data, you can convert it to a UIImage either by using `[UIImage imageWithData:data]` or by using `LIPParseImage(data)`.
+
+#### Example:
+```
+	NSString* const imagesDomain = @"com.muirey03.liptestimages";
+	NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:@"backgroundImage" inDomain:imagesDomain];
+	UIImage* bgImage = [UIImage imageWithData:data];
 ```

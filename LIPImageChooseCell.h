@@ -15,7 +15,7 @@
 @property (nonatomic, retain) NSString* defaults;
 @property (nonatomic, retain) NSString* postNotification;
 @property (nonatomic) BOOL usesJPEG;
-@property (nonatomic) CGFloat compressionRate;
+@property (nonatomic) CGFloat compressionQuality;
 -(id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2 specifier:(id)arg3;
 -(void)chooseImage;
 @end
