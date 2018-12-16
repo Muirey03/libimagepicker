@@ -14,7 +14,10 @@
 		self.defaults = [[arg3 properties] valueForKey:@"defaults"];
 		self.postNotification = [[arg3 properties] valueForKey:@"PostNotification"];
 		self.usesJPEG = [[arg3 properties] valueForKey:@"usesJPEG"] ? [[[arg3 properties] valueForKey:@"usesJPEG"] boolValue] : NO;
+		self.usesGIF = [[arg3 properties] valueForKey:@"usesGIF"] ? [[[arg3 properties] valueForKey:@"usesGIF"] boolValue] : NO;
 		self.compressionQuality = [[arg3 properties] valueForKey:@"compressionQuality"] ? [[[arg3 properties] valueForKey:@"compressionQuality"] floatValue] : 1.0;
+		self.allowsVideos = [[arg3 properties] valueForKey:@"allowsVideos"] ? [[[arg3 properties] valueForKey:@"allowsVideos"] boolValue] : NO;
+		self.videoPath = [[arg3 properties] valueForKey:@"videoPath"];
 	}
 	return self;
 }
@@ -22,33 +25,48 @@
 -(void)didMoveToWindow
 {
     [super didMoveToWindow];
+	
     if (!previewImage)
     {
-        NSDictionary* preferences = [[NSDictionary alloc] initWithContentsOfFile:[NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", self.defaults]];
-        UIImage* img = [UIImage imageWithData:preferences[self.key]];
+		CGFloat imgSize = self.frame.size.height - 10;
+		previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
+		[previewImage setContentMode:UIViewContentModeScaleAspectFill];
+		[previewImage setClipsToBounds:YES];
+		[self addSubview:previewImage];
+
+		NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:self.key inDomain:self.defaults];
+        UIImage* img = [UIImage imageWithData:data];
 		if (img)
 		{
-			CGFloat imgSize = self.frame.size.height - 10;
-	        previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
-	        [previewImage setContentMode:UIViewContentModeScaleAspectFill];
-	        [previewImage setClipsToBounds:YES];
 	        previewImage.image = img;
-	        [self addSubview:previewImage];
+		}
+		else if (self.videoPath)
+		{
+			NSURL* fileURL = [NSURL fileURLWithPath:self.videoPath];
+			//get image from video
+			AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+			AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+			UIImage* image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+			previewImage.image = image;
 		}
     }
 }
 
 -(void)chooseImage
 {
-	UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+	UIImagePickerController* picker = [[UIImagePickerController alloc] init];
     picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-    picker.delegate = self;
+
+	if (self.allowsVideos)
+	{
+		picker.mediaTypes = @[(NSString*)kUTTypeImage, (NSString*)kUTTypeMovie];
+	}
+	picker.delegate = self;
     [listController presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker
-        didFinishPickingImage:(UIImage *)image
-                  editingInfo:(NSDictionary *)editingInfo
+        didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
 	UIActivityIndicatorView *spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
 	spinner.frame = picker.view.frame;
@@ -56,21 +74,74 @@
 	[picker.view addSubview:spinner];
 	[spinner startAnimating];
 
-	NSData* data = self.usesJPEG ? UIImageJPEGRepresentation(image, self.compressionQuality) : UIImagePNGRepresentation(image);
-	NSString* prefsPath = [NSString stringWithFormat:@"/var/mobile/Library/Preferences/%@.plist", self.defaults];
-	NSMutableDictionary* preferences = [[NSMutableDictionary alloc] initWithContentsOfFile:prefsPath];
-	if (!preferences)
+	NSURL* refURL = [info objectForKey:UIImagePickerControllerReferenceURL];
+	if (refURL)
 	{
-		preferences = [NSMutableDictionary new];
-	}
-	[preferences setValue:data forKey:self.key];
-	[preferences writeToFile:prefsPath atomically:YES];
-	notify_post([self.postNotification UTF8String]);
-	previewImage.image = image;
+		PHAsset* asset = [[PHAsset fetchAssetsWithALAssetURLs:@[refURL] options:nil] lastObject];
+		if (asset)
+		{
+			if (asset.isVideo)
+			{
+				//user chose a video
+				[[PHImageManager defaultManager] requestExportSessionForVideo:asset options:nil exportPreset:AVAssetExportPresetHighestQuality resultHandler:^(AVAssetExportSession* exportSession, NSDictionary* info) {
+					NSURL* fileURL = [NSURL fileURLWithPath:self.videoPath];
+					exportSession.outputURL = fileURL;
+					if ([[self.videoPath lowercaseString] hasSuffix:@".mov"])
+					{
+						exportSession.outputFileType = AVFileTypeQuickTimeMovie;
+					}
+					else
+					{
+						exportSession.outputFileType = AVFileTypeMPEG4;
+					}
+					[exportSession exportAsynchronouslyWithCompletionHandler:^{
+						//get image from video
+						AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+						AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+						UIImage* image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+						previewImage.image = image;
+					}];
+				}];
+				[[NSUserDefaults standardUserDefaults] setObject:nil forKey:self.key inDomain:self.defaults];
+				notify_post([self.postNotification UTF8String]);
+			}
+			else
+			{
+				//delete video
+				if (self.videoPath)
+				{
+					[[NSFileManager defaultManager] removeItemAtPath:self.videoPath error:nil];
+				}
 
-	[listController dismissViewControllerAnimated:YES completion:^{
-		[spinner stopAnimating];
-	}];
+				//user chose an image
+				[[PHImageManager defaultManager] requestImageDataForAsset:asset options:nil resultHandler:^(NSData * _Nullable data, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info)
+				{
+					if (data)
+					{
+						UIImage* image = [UIImage imageWithData:data];
+
+						if (self.usesJPEG)
+						{
+							data = UIImageJPEGRepresentation(image, self.compressionQuality);
+						}
+						else if (!self.usesGIF)
+						{
+							data = UIImagePNGRepresentation(image);
+						}
+
+						[[NSUserDefaults standardUserDefaults] setObject:data forKey:self.key inDomain:self.defaults];
+						notify_post([self.postNotification UTF8String]);
+
+						previewImage.image = image;
+					}
+				}];
+			}
+
+			[listController dismissViewControllerAnimated:YES completion:^{
+				[spinner stopAnimating];
+			}];
+		}
+	}
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker

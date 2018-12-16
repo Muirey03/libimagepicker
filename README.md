@@ -8,8 +8,6 @@
 
 ### Adding libimagepicker into your tweak's prefs bundle:
 
-##### Images must be stored in a different plist to any other settings in your tweak!
-
 Add a new dictionary in your preference's specifier plist like this:
 ```
 		<dict>
@@ -28,9 +26,15 @@ Add a new dictionary in your preference's specifier plist like this:
 			<key>PostNotification</key>
 			<string>NOTIFICATION TO POST (OPTIONAL)</string>
 			<key>usesJPEG</key>
-			<true/> <!-- Whether to use JPEG compression, defaults to false -->
+			<false/> <!-- Whether to use JPEG compression, defaults to false -->
 			<key>compressionQuality</key>
 			<real>DESIRED COMPRESSION QUALITY</real> <!-- The quality of the resulting JPEG image, expressed as a value from 0.0 to 1.0. The value 0.0 represents the maximum compression (or lowest quality) while the value 1.0 represents the least compression (or best quality). -->
+			<key>usesGIF</key> <!-- defaults to false - set this to true to write gif data instead of png data when a gif is chosen (overriden by usesJPEG) -->
+			<true/>
+			<key>allowsVideos</key> <!-- allow videos to be chosen as well as images - if this is true, a videoPath key must also be specified -->
+			<true/>
+			<key>videoPath</key>
+			<string>PATH TO STORE VIDEO AT</string>
 		</dict>
 ```
 
@@ -58,6 +62,8 @@ Add a new dictionary in your preference's specifier plist like this:
 
 ### Accessing images from your Tweak.xm:
 
+#### IF YOU HAVE allowsVideos ENABLED, SKIP TO "Accessing Videos from your Tweak.xm"
+
 Images are stored in your defaults plist as NSData. You can access this data in exactly the same way you would with any other value stored in a plist. Once you've got the image as data, you can convert it to a UIImage either by using `[UIImage imageWithData:data]` or by using `LIPParseImage(data)`.
 
 #### Example:
@@ -65,4 +71,27 @@ Images are stored in your defaults plist as NSData. You can access this data in 
 	NSString* const imagesDomain = @"com.muirey03.liptestimages";
 	NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:@"backgroundImage" inDomain:imagesDomain];
 	UIImage* bgImage = [UIImage imageWithData:data];
+```
+
+### Accessing Videos from your Tweak.xm:
+
+When the `allowsVideos` key is set to true, both videos and images can be chosen. In order to check which has been chosen by the user in your Tweak.xm, you simply need to check for the existence of videoPath.
+
+#### Example:
+```
+	NSString* const imagesDomain = @"com.muirey03.liptestimages";
+	NSString* const videoPath = @"/var/mobile/Library/liptest.mp4";
+
+	if ([[NSFileManager defaultManager] fileExistsAtPath:videoPath])
+	{
+		//user chose a video
+		NSURL* videoURL = [NSURL fileURLWithPath:videoPath];
+		AVPlayer* player = [AVPlayer playerWithURL:videoURL];
+	}
+	else
+	{
+		//user chose a image/gif
+		NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:@"backgroundImage" inDomain:imagesDomain];
+		UIImage* bgImage = [UIImage imageWithData:data];
+	}
 ```

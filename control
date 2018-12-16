@@ -1,7 +1,7 @@
 Package: com.muirey03.libimagepicker
 Name: libimagepicker
 Depends:
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm
 Description: A simple library for choosing images in preference bundles.
 Maintainer: Muirey03

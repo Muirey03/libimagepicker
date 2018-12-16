@@ -5,7 +5,7 @@ include $(THEOS)/makefiles/common.mk
 LIBRARY_NAME = libimagepicker
 libimagepicker_FILES = libimagepicker.mm LIPImageChooseCell.m
 libimagepicker_PRIVATE_FRAMEWORKS = Preferences
-libimagepicker_FRAMEWORKS = UIKit
+libimagepicker_FRAMEWORKS = UIKit Photos MobileCoreServices
 libimagepicker_CFLAGS = -fobjc-arc
 
 after-install::
