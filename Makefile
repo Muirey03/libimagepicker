@@ -1,11 +1,11 @@
-ARCHS = armv7 arm64
+ARCHS = armv7 arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = libimagepicker
 libimagepicker_FILES = libimagepicker.mm LIPImageChooseCell.m
-libimagepicker_PRIVATE_FRAMEWORKS = Preferences
-libimagepicker_FRAMEWORKS = UIKit Photos MobileCoreServices
+libimagepicker_FRAMEWORKS = UIKit Preferences Photos MobileCoreServices
+libimagepicker_LDFLAGS += -FFrameworks/
 libimagepicker_CFLAGS = -fobjc-arc
 
 after-install::
