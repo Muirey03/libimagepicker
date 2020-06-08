@@ -29,25 +29,48 @@
     if (!previewImage)
     {
 		CGFloat imgSize = self.frame.size.height - 10;
-		previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
-		[previewImage setContentMode:UIViewContentModeScaleAspectFill];
-		[previewImage setClipsToBounds:YES];
-		[self addSubview:previewImage];
+	    	if ([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+			previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(15, 5, imgSize, imgSize)];
+			[previewImage setContentMode:UIViewContentModeScaleAspectFill];
+			[previewImage setClipsToBounds:YES];
+			[self addSubview:previewImage];
 
-		NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:self.key inDomain:self.defaults];
-        UIImage* img = [UIImage imageWithData:data];
-		if (img)
-		{
-	        previewImage.image = img;
-		}
-		else if (self.videoPath)
-		{
-			NSURL* fileURL = [NSURL fileURLWithPath:self.videoPath];
-			//get image from video
-			AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
-			AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
-			UIImage* image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
-			previewImage.image = image;
+			NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:self.key inDomain:self.defaults];
+			UIImage* img = [UIImage imageWithData:data];
+			if (img)
+			{
+				previewImage.image = img;
+			}
+			else if (self.videoPath)
+			{
+				NSURL* fileURL = [NSURL fileURLWithPath:self.videoPath];
+				//get image from video
+				AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+				AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+				UIImage* image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+				previewImage.image = image;
+			}
+		} else {
+			previewImage = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.width - 15, 5, imgSize, imgSize)];
+			[previewImage setContentMode:UIViewContentModeScaleAspectFill];
+			[previewImage setClipsToBounds:YES];
+			[self addSubview:previewImage];
+
+			NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:self.key inDomain:self.defaults];
+			UIImage* img = [UIImage imageWithData:data];
+			if (img)
+			{
+				previewImage.image = img;
+			}
+			else if (self.videoPath)
+			{
+				NSURL* fileURL = [NSURL fileURLWithPath:self.videoPath];
+				//get image from video
+				AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+				AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+				UIImage* image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+				previewImage.image = image;
+			}
 		}
     }
 }
